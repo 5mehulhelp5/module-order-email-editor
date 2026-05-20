@@ -1,0 +1,221 @@
+/*
+ * Etechflow_OrderEmailEditor — admin modal styles.
+ * Vanilla CSS (no Tailwind, no jQuery/Knockout dep) so it works in vanilla
+ * Magento admin and on Hyva-themed installs identically.
+ */
+
+/* ── Trigger button (the "Edit Email" link next to the email on the order page) ─── */
+.eteoee-trigger-wrap {
+    margin: 6px 0 8px;
+}
+.eteoee-trigger {
+    cursor: pointer;
+    font-size: 12px;
+    padding: 4px 12px;
+    line-height: 1.4;
+}
+
+/* ── Modal shell ───────────────────────────────────────────────────────────────── */
+.eteoee-modal[hidden] { display: none; }
+.eteoee-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 6vh 16px;
+    overflow-y: auto;
+}
+body.eteoee-no-scroll { overflow: hidden; }
+
+.eteoee-modal__backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, .55);
+    backdrop-filter: blur(2px);
+    -webkit-backdrop-filter: blur(2px);
+}
+
+.eteoee-modal__panel {
+    position: relative;
+    background: #ffffff;
+    width: 100%;
+    max-width: 520px;
+    border-radius: 12px;
+    box-shadow: 0 24px 60px rgba(15, 23, 42, .28), 0 4px 12px rgba(15, 23, 42, .12);
+    overflow: hidden;
+    font-family: 'Open Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    animation: eteoee-pop-in 160ms cubic-bezier(.16,.84,.44,1);
+}
+@keyframes eteoee-pop-in {
+    from { opacity: 0; transform: translateY(8px) scale(.98); }
+    to   { opacity: 1; transform: translateY(0)   scale(1); }
+}
+
+/* ── Header ────────────────────────────────────────────────────────────────────── */
+.eteoee-modal__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 18px 28px 16px !important;
+    border-bottom: 1px solid #ECEEF1;
+    background: linear-gradient(180deg, #F9FAFB 0%, #ffffff 100%);
+}
+.eteoee-modal__title {
+    font-size: 16px;
+    font-weight: 700;
+    margin: 0;
+    color: #0F172A;
+    letter-spacing: -.01em;
+}
+.eteoee-modal__close {
+    background: transparent;
+    border: 0;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    font-size: 22px;
+    line-height: 1;
+    cursor: pointer;
+    color: #6B7280;
+    padding: 0;
+    transition: background-color .12s ease, color .12s ease;
+}
+.eteoee-modal__close:hover {
+    background: #F1F5F9;
+    color: #0F172A;
+}
+
+/* ── Form body ────────────────────────────────────────────────────────────────── */
+/* High-specificity selectors fight Magento admin's stock form CSS which
+   otherwise zeros out form padding. */
+.eteoee-modal .eteoee-modal__panel form.eteoee-form,
+.eteoee-modal__panel form.eteoee-form,
+form.eteoee-form {
+    padding: 24px 28px 10px !important;
+    margin: 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 16px !important;
+    box-sizing: border-box !important;
+    background: #ffffff !important;
+}
+.eteoee-form > * {
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    box-sizing: border-box !important;
+    width: 100% !important;
+}
+/* Ensure the .eteoee-current pill respects its own padding even when admin
+   CSS adds zero-margin / full-width children rules. */
+.eteoee-modal .eteoee-current { padding: 10px 14px !important; }
+.eteoee-current {
+    margin: 0 0 4px;
+    padding: 10px 12px;
+    background: #F8FAFC;
+    border: 1px solid #E5E7EB;
+    border-radius: 8px;
+    font-size: 13px;
+    color: #4B5563;
+}
+.eteoee-current strong {
+    color: #0F172A;
+    font-weight: 600;
+    margin-left: 4px;
+    word-break: break-all;
+}
+.eteoee-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: #1F2937;
+    letter-spacing: .01em;
+    margin: 4px 0 -8px;
+}
+.eteoee-input {
+    width: 100%;
+    height: 40px;
+    padding: 0 14px;
+    border: 1px solid #CBD5E1;
+    border-radius: 8px;
+    font-size: 14px;
+    color: #0F172A;
+    background: #ffffff;
+    transition: border-color .12s ease, box-shadow .12s ease;
+}
+.eteoee-input:focus {
+    outline: none;
+    border-color: #2563EB;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, .15);
+}
+.eteoee-input::placeholder { color: #9CA3AF; }
+
+.eteoee-checkbox {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: #1F2937;
+    cursor: pointer;
+    user-select: none;
+    padding: 2px 0;
+}
+.eteoee-checkbox input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+    accent-color: #2563EB;
+}
+.eteoee-guest-note {
+    font-size: 12px;
+    color: #6B7280;
+    margin: 0;
+    padding: 8px 12px;
+    background: #F9FAFB;
+    border-left: 3px solid #D1D5DB;
+    border-radius: 4px;
+    font-style: italic;
+}
+
+/* ── Feedback (success / error) ───────────────────────────────────────────────── */
+.eteoee-feedback {
+    min-height: 0;
+    font-size: 13px;
+    line-height: 1.4;
+}
+.eteoee-feedback:not(:empty) {
+    padding: 8px 12px;
+    border-radius: 6px;
+    margin-top: 4px;
+}
+.eteoee-feedback.is-success {
+    color: #065F46;
+    background: #ECFDF5;
+    border: 1px solid #A7F3D0;
+}
+.eteoee-feedback.is-error {
+    color: #991B1B;
+    background: #FEF2F2;
+    border: 1px solid #FECACA;
+}
+
+/* ── Footer ───────────────────────────────────────────────────────────────────── */
+.eteoee-modal__footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 14px;
+    padding: 14px 28px 18px !important;
+    border-top: 1px solid #ECEEF1;
+    background: #F9FAFB;
+}
+.eteoee-modal__footer .action-secondary,
+.eteoee-modal__footer .action-primary {
+    border-radius: 8px !important;
+    padding: 8px 18px !important;
+    font-size: 13px !important;
+    font-weight: 600 !important;
+    min-height: 36px;
+}
+.eteoee-submit[disabled] { opacity: .6; cursor: progress; }
+.eteoee-submit-spinner { font-size: 14px; margin-left: 4px; }

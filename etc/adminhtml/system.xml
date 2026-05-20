@@ -1,0 +1,90 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Config:etc/system_file.xsd">
+    <system>
+        <tab id="etechflow" translate="label" sortOrder="400">
+            <label>eTechFlow</label>
+        </tab>
+        <section id="etechflow_orderemaileditor"
+                 translate="label"
+                 type="text"
+                 sortOrder="170"
+                 showInDefault="1"
+                 showInWebsite="0"
+                 showInStore="0">
+            <label>Order Email Editor</label>
+            <tab>etechflow</tab>
+            <resource>ETechFlow_OrderEmailEditor::config</resource>
+
+            <group id="license"
+                   translate="label"
+                   type="text"
+                   sortOrder="5"
+                   showInDefault="1"
+                   showInWebsite="0"
+                   showInStore="0">
+                <label>License</label>
+                <field id="production_environment"
+                       translate="label comment tooltip"
+                       type="select"
+                       sortOrder="5"
+                       showInDefault="1"
+                       showInWebsite="0"
+                       showInStore="0">
+                    <label>Production Environment</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    <tooltip>Yes for live sites, No for dev/staging on non-standard domains.</tooltip>
+                    <comment><![CDATA[
+                        <strong>Yes</strong> = this is your live site. The module checks the licence
+                        key against the current domain. If invalid, the module silently disables itself.<br/>
+                        <strong>No</strong> = this is dev/staging. The module runs at full features
+                        without a licence — use this on non-standard dev domains the auto-detector misses.<br/>
+                        Default: Yes.
+                    ]]></comment>
+                </field>
+                <field id="license_key"
+                       translate="label comment tooltip"
+                       type="text"
+                       sortOrder="10"
+                       showInDefault="1"
+                       showInWebsite="0"
+                       showInStore="0">
+                    <label>License Key</label>
+                    <tooltip>Paste your purchase-email key here. Bound to the production domain.</tooltip>
+                    <comment><![CDATA[
+                        Paste the key from your purchase email. Tied to your live website's address.<br/>
+                        Bought the eTechFlow bundle? Enter the bundle key in any module's License section
+                        and it activates every eTechFlow module at once.
+                    ]]></comment>
+                </field>
+            </group>
+
+            <group id="general"
+                   translate="label"
+                   type="text"
+                   sortOrder="10"
+                   showInDefault="1"
+                   showInWebsite="0"
+                   showInStore="0">
+                <label>General Settings</label>
+                <field id="enabled"
+                       translate="label comment tooltip"
+                       type="select"
+                       sortOrder="10"
+                       showInDefault="1"
+                       showInWebsite="0"
+                       showInStore="0">
+                    <label>Enable Module</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    <tooltip>Master on/off switch. No = the Edit Email button + history menu hide.</tooltip>
+                    <comment><![CDATA[
+                        Master on/off switch.<br/>
+                        <strong>Yes</strong> = the module runs: the Edit Email button appears on admin
+                        order detail pages, the history menu appears under Sales → Operations.<br/>
+                        <strong>No</strong> = the module does nothing. The admin order view is unchanged.
+                    ]]></comment>
+                </field>
+            </group>
+        </section>
+    </system>
+</config>

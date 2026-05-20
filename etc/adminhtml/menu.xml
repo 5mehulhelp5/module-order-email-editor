@@ -1,0 +1,13 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Backend:etc/menu.xsd">
+    <menu>
+        <add id="ETechFlow_OrderEmailEditor::history"
+             title="Order Email Change History"
+             module="ETechFlow_OrderEmailEditor"
+             sortOrder="200"
+             parent="Magento_Sales::sales_operation"
+             action="order_email_editor/history/index"
+             resource="ETechFlow_OrderEmailEditor::view_history"/>
+    </menu>
+</config>

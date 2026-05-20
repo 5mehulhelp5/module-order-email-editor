@@ -1,0 +1,81 @@
+<?php
+declare(strict_types=1);
+/** @var \Magento\Backend\Block\Template $block */
+/** @var \Magento\Framework\Escaper $escaper */
+
+$order      = $block->getLayout()->getBlock('order_info') ? $block->getLayout()->getBlock('order_info')->getOrder() : null;
+if (! $order || ! $order->getId()) {
+    return;
+}
+
+$updateUrl  = $block->getUrl('order_email_editor/order/update');
+$orderId    = (int)    $order->getId();
+$currentEm  = (string) $order->getCustomerEmail();
+$hasCustId  = $order->getCustomerId() !== null;
+$formKey    = $block->getFormKey();
+$modalId    = 'eteoee-modal-' . $orderId;
+?>
+<div class="eteoee-trigger-wrap"
+     data-current-email="<?= $escaper->escapeHtmlAttr($currentEm) ?>"
+     data-order-id="<?= $orderId ?>">
+    <button type="button"
+            class="action-default eteoee-trigger"
+            data-modal-target="#<?= $escaper->escapeHtmlAttr($modalId) ?>">
+        <span><?= $escaper->escapeHtml(__('Edit Email')) ?></span>
+    </button>
+</div>
+
+<div id="<?= $escaper->escapeHtmlAttr($modalId) ?>" class="eteoee-modal" role="dialog" aria-modal="true" hidden>
+    <div class="eteoee-modal__backdrop" data-modal-close></div>
+    <div class="eteoee-modal__panel" role="document">
+        <header class="eteoee-modal__header">
+            <h2 class="eteoee-modal__title"><?= $escaper->escapeHtml(__('Edit Order Email Address')) ?></h2>
+            <button type="button" class="eteoee-modal__close" data-modal-close aria-label="<?= $escaper->escapeHtmlAttr(__('Close')) ?>">&times;</button>
+        </header>
+
+        <form class="eteoee-form"
+              data-update-url="<?= $escaper->escapeHtmlAttr($updateUrl) ?>"
+              style="padding-left:28px !important;padding-right:28px !important;padding-top:24px !important;padding-bottom:10px !important;margin:0 !important;display:flex !important;flex-direction:column !important;gap:16px !important;box-sizing:border-box !important;background:#fff !important;width:100% !important;">
+            <input type="hidden" name="form_key" value="<?= $escaper->escapeHtmlAttr($formKey) ?>"/>
+            <input type="hidden" name="order_id" value="<?= $orderId ?>"/>
+
+            <p class="eteoee-current">
+                <?= $escaper->escapeHtml(__('Current email:')) ?>
+                <strong><?= $escaper->escapeHtml($currentEm) ?></strong>
+            </p>
+
+            <label class="eteoee-label" for="eteoee-new-email-<?= $orderId ?>">
+                <?= $escaper->escapeHtml(__('New email address')) ?>
+            </label>
+            <input type="email"
+                   id="eteoee-new-email-<?= $orderId ?>"
+                   name="new_email"
+                   class="input-text eteoee-input"
+                   required
+                   autocomplete="off"/>
+
+            <?php if ($hasCustId): ?>
+                <label class="eteoee-checkbox">
+                    <input type="checkbox" name="update_customer" value="1"/>
+                    <span><?= $escaper->escapeHtml(__('Also update the linked customer account')) ?></span>
+                </label>
+            <?php else: ?>
+                <p class="eteoee-guest-note">
+                    <?= $escaper->escapeHtml(__('This is a guest order — no customer account is linked.')) ?>
+                </p>
+            <?php endif; ?>
+
+            <div class="eteoee-feedback" role="alert" aria-live="polite"></div>
+
+            <footer class="eteoee-modal__footer">
+                <button type="button" class="action-secondary" data-modal-close>
+                    <?= $escaper->escapeHtml(__('Cancel')) ?>
+                </button>
+                <button type="submit" class="action-primary eteoee-submit">
+                    <span class="eteoee-submit-label"><?= $escaper->escapeHtml(__('Change Email')) ?></span>
+                    <span class="eteoee-submit-spinner" hidden>…</span>
+                </button>
+            </footer>
+        </form>
+    </div>
+</div>

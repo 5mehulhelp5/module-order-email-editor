@@ -1,0 +1,29 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="urn:magento:framework:Acl/etc/acl.xsd">
+    <acl>
+        <resources>
+            <resource id="Magento_Backend::admin">
+                <resource id="Magento_Sales::sales">
+                    <resource id="Magento_Sales::sales_operation">
+                        <resource id="Magento_Sales::sales_order">
+                            <resource id="ETechFlow_OrderEmailEditor::edit_email"
+                                      title="Edit Order Email Address"
+                                      sortOrder="100"/>
+                            <resource id="ETechFlow_OrderEmailEditor::view_history"
+                                      title="View Email-Change History"
+                                      sortOrder="110"/>
+                        </resource>
+                    </resource>
+                </resource>
+                <resource id="Magento_Backend::stores">
+                    <resource id="Magento_Config::config">
+                        <resource id="ETechFlow_OrderEmailEditor::config"
+                                  title="ETechFlow Order Email Editor Configuration"
+                                  sortOrder="100"/>
+                    </resource>
+                </resource>
+            </resource>
+        </resources>
+    </acl>
+</config>

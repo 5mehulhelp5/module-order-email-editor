@@ -1,0 +1,33 @@
+<?xml version="1.0"?>
+<schema xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="urn:magento:framework:Setup/Declaration/Schema/etc/schema.xsd">
+    <table name="etechflow_email_change_history" resource="default" engine="innodb"
+           comment="Audit log of order customer-email changes">
+        <column xsi:type="int"       name="history_id"              identity="true"  unsigned="true" nullable="false"/>
+        <column xsi:type="int"       name="order_id"                                  unsigned="true" nullable="false" comment="sales_order.entity_id"/>
+        <column xsi:type="varchar"   name="increment_id"            length="32"                      nullable="false" comment="sales_order.increment_id (for grid display)"/>
+        <column xsi:type="varchar"   name="old_email"               length="255"                     nullable="false"/>
+        <column xsi:type="varchar"   name="new_email"               length="255"                     nullable="false"/>
+        <column xsi:type="int"       name="changed_by_admin_id"                       unsigned="true" nullable="true"  comment="admin_user.user_id"/>
+        <column xsi:type="varchar"   name="changed_by_admin_name"   length="128"                     nullable="true"  comment="admin_user.username at the time of change"/>
+        <column xsi:type="smallint"  name="customer_record_updated"                   unsigned="true" nullable="false" default="0" comment="1 if linked customer_entity.email was also updated"/>
+        <column xsi:type="varchar"   name="ip_address"              length="64"                      nullable="true"/>
+        <column xsi:type="timestamp" name="changed_at"                                                nullable="false" default="CURRENT_TIMESTAMP" on_update="false"/>
+
+        <constraint xsi:type="primary" referenceId="PRIMARY">
+            <column name="history_id"/>
+        </constraint>
+
+        <constraint xsi:type="foreign" referenceId="ETEOEE_HIST_ORDER_FK"
+                    table="etechflow_email_change_history" column="order_id"
+                    referenceTable="sales_order" referenceColumn="entity_id"
+                    onDelete="CASCADE"/>
+
+        <index referenceId="ETEOEE_HIST_ORDER_IDX" indexType="btree">
+            <column name="order_id"/>
+        </index>
+        <index referenceId="ETEOEE_HIST_CHANGED_AT_IDX" indexType="btree">
+            <column name="changed_at"/>
+        </index>
+    </table>
+</schema>

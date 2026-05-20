@@ -1,0 +1,43 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="urn:magento:framework:ObjectManager/etc/config.xsd">
+
+    <!-- Wire repository interface -->
+    <preference for="ETechFlow\OrderEmailEditor\Api\EmailChangeHistoryRepositoryInterface"
+                type="ETechFlow\OrderEmailEditor\Model\EmailChangeHistoryRepository"/>
+    <preference for="ETechFlow\OrderEmailEditor\Api\Data\EmailChangeHistoryInterface"
+                type="ETechFlow\OrderEmailEditor\Model\EmailChangeHistory"/>
+
+    <!-- Concrete arguments for the grid collection: mainTable, eventPrefix,
+         eventObject, resourceModel. These are required by the standard
+         Magento UI Grid collection constructor pattern. -->
+    <type name="ETechFlow\OrderEmailEditor\Model\ResourceModel\EmailChangeHistory\Grid\Collection">
+        <arguments>
+            <argument name="mainTable"     xsi:type="string">etechflow_email_change_history</argument>
+            <argument name="eventPrefix"   xsi:type="string">etechflow_email_change_history_grid_collection</argument>
+            <argument name="eventObject"   xsi:type="string">etechflow_email_change_history_grid_collection</argument>
+            <argument name="resourceModel" xsi:type="string">ETechFlow\OrderEmailEditor\Model\ResourceModel\EmailChangeHistory</argument>
+        </arguments>
+    </type>
+
+    <!-- Tell Magento_Ui's CollectionFactory which class to instantiate for
+         the history-listing data source. -->
+    <type name="Magento\Framework\View\Element\UiComponent\DataProvider\CollectionFactory">
+        <arguments>
+            <argument name="collections" xsi:type="array">
+                <item name="order_email_editor_history_listing_data_source"
+                      xsi:type="string">ETechFlow\OrderEmailEditor\Model\ResourceModel\EmailChangeHistory\Grid\Collection</item>
+            </argument>
+        </arguments>
+    </type>
+
+    <!-- Verify CLI registration. -->
+    <type name="Magento\Framework\Console\CommandList">
+        <arguments>
+            <argument name="commands" xsi:type="array">
+                <item name="etechflow_oee_verify"
+                      xsi:type="object">ETechFlow\OrderEmailEditor\Console\Command\VerifyCommand</item>
+            </argument>
+        </arguments>
+    </type>
+</config>
