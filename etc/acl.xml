@@ -16,11 +16,20 @@
                         </resource>
                     </resource>
                 </resource>
+                <!--
+                    v1.0.1 fix: Magento_Config::config must nest under
+                    stores_settings (Magento Core's parent path). Direct
+                    nesting under stores triggers a duplicate-ID error in
+                    Magento 2.4.x merged ACL XSD validation, 500'ing the
+                    admin.
+                -->
                 <resource id="Magento_Backend::stores">
-                    <resource id="Magento_Config::config">
-                        <resource id="ETechFlow_OrderEmailEditor::config"
-                                  title="ETechFlow Order Email Editor Configuration"
-                                  sortOrder="100"/>
+                    <resource id="Magento_Backend::stores_settings">
+                        <resource id="Magento_Config::config">
+                            <resource id="ETechFlow_OrderEmailEditor::config"
+                                      title="ETechFlow Order Email Editor Configuration"
+                                      sortOrder="100"/>
+                        </resource>
                     </resource>
                 </resource>
             </resource>

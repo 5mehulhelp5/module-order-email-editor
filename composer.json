@@ -2,7 +2,7 @@
     "name": "etechflow/module-order-email-editor",
     "description": "Edit the customer email on a placed order, optionally sync to the linked customer account, keep an audit trail of every change. Admin-only, Hyvä-safe. Magento Open Source + Adobe Commerce compatible.",
     "type": "magento2-module",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "license": "proprietary",
     "authors": [
         {
