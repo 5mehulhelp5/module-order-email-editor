@@ -4,6 +4,27 @@ All notable changes to this module. Adheres to [Semantic Versioning](https://sem
 
 ---
 
+## [1.0.2] — 2026-05-22 — Move admin menu under eTechFlow top-level sidebar
+
+### Changed
+
+- **OEE admin pages relocated to a dedicated "eTechFlow" sidebar entry.** Previously the Edit History list lived under `Sales → Sales Operation`. Now it sits as an `Order Email Editor` column inside a new top-level `eTechFlow` sidebar entry (clusters with other paid-extension vendors above Magento's Stores). Matches the pattern Amasty / Magefan / MageWorx use.
+- Each eTechFlow module declares the same `eTechFlow::root` + `eTechFlow::settings` + `eTechFlow::configuration` entries — Magento merges by id, so installing N modules still produces exactly one `eTechFlow` sidebar group.
+
+### Migration
+
+```
+composer update etechflow/module-order-email-editor
+bin/magento setup:upgrade
+bin/magento setup:di:compile
+bin/magento setup:static-content:deploy -f
+bin/magento cache:flush
+```
+
+Admin URL routes unchanged (`order_email_editor/history/index` still works). No schema or behaviour changes — pure menu-layout adjustment.
+
+---
+
 ## [1.0.0] — 2026-05-19
 
 ### Initial commercial release
