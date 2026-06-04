@@ -16,46 +16,68 @@
             <tab>etechflow</tab>
             <resource>ETechFlow_OrderEmailEditor::config</resource>
 
-            <group id="license"
-                   translate="label"
-                   type="text"
-                   sortOrder="5"
-                   showInDefault="1"
-                   showInWebsite="0"
-                   showInStore="0">
+            <!-- ============================================================
+                 LICENSE
+            ============================================================ -->
+            <group id="license" translate="label" type="text" sortOrder="5"
+                   showInDefault="1" showInWebsite="0" showInStore="0">
                 <label>License</label>
-                <field id="production_environment"
-                       translate="label comment tooltip"
-                       type="select"
-                       sortOrder="5"
-                       showInDefault="1"
-                       showInWebsite="0"
-                       showInStore="0">
+                <field id="license_key" translate="label comment tooltip" type="text" sortOrder="10"
+                       showInDefault="1" showInWebsite="0" showInStore="0">
+                    <label>License Key</label>
+                    <tooltip>Paste your eTechFlow SP-XXXX subscription key (auto-saved after Stripe payment) or a per-module/bundle key.</tooltip>
+                    <comment><![CDATA[Paste your eTechFlow SP-XXXX subscription key (generated automatically after Stripe payment) OR a per-module HMAC key. Bundle key also accepted. Get one at <a href="https://etechflow.com" target="_blank">etechflow.com</a>.]]></comment>
+                </field>
+                <field id="issued_key" translate="label comment" type="obscure" sortOrder="20"
+                       showInDefault="1" showInWebsite="0" showInStore="0">
+                    <label>Issued Key (auto)</label>
+                    <comment><![CDATA[Set automatically on first successful validation. Used to restore the key after an IP-block event. Do not edit.]]></comment>
+                    <backend_model>Magento\Config\Model\Config\Backend\Encrypted</backend_model>
+                </field>
+                <field id="portal_url" translate="label comment" type="text" sortOrder="25"
+                       showInDefault="1" showInWebsite="0" showInStore="0">
+                    <label>License Portal URL</label>
+                    <comment><![CDATA[eTechFlow licensing portal endpoint. Update if your portal URL changes.]]></comment>
+                </field>
+                <field id="bundle_license_key" translate="label comment" type="obscure" sortOrder="30"
+                       showInDefault="1" showInWebsite="0" showInStore="0">
+                    <label>Bundle License Key</label>
+                    <comment><![CDATA[Shared key that activates every eTechFlow module on this host. Set EITHER this OR the per-module key above.]]></comment>
+                    <config_path>etechflow_bundle/license/license_key</config_path>
+                    <backend_model>Magento\Config\Model\Config\Backend\Encrypted</backend_model>
+                </field>
+                <field id="production_environment" translate="label comment tooltip" type="select" sortOrder="40"
+                       showInDefault="1" showInWebsite="0" showInStore="0">
                     <label>Production Environment</label>
                     <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
                     <tooltip>Yes for live sites, No for dev/staging on non-standard domains.</tooltip>
-                    <comment><![CDATA[
-                        <strong>Yes</strong> = this is your live site. The module checks the licence
-                        key against the current domain. If invalid, the module silently disables itself.<br/>
-                        <strong>No</strong> = this is dev/staging. The module runs at full features
-                        without a licence — use this on non-standard dev domains the auto-detector misses.<br/>
-                        Default: Yes.
-                    ]]></comment>
+                    <comment><![CDATA[<strong>Yes</strong> — live store; license enforced. <strong>No</strong> — dev/staging; licensing bypassed. Common dev hosts auto-detect.]]></comment>
                 </field>
-                <field id="license_key"
-                       translate="label comment tooltip"
-                       type="text"
-                       sortOrder="10"
-                       showInDefault="1"
-                       showInWebsite="0"
-                       showInStore="0">
-                    <label>License Key</label>
-                    <tooltip>Paste your purchase-email key here. Bound to the production domain.</tooltip>
-                    <comment><![CDATA[
-                        Paste the key from your purchase email. Tied to your live website's address.<br/>
-                        Bought the eTechFlow bundle? Enter the bundle key in any module's License section
-                        and it activates every eTechFlow module at once.
-                    ]]></comment>
+            </group>
+
+            <!-- ============================================================
+                 PAYMENT (STRIPE)
+            ============================================================ -->
+            <group id="payment" translate="label" type="text" sortOrder="6"
+                   showInDefault="1" showInWebsite="0" showInStore="0">
+                <label>Payment Settings (Stripe)</label>
+                <comment><![CDATA[Enter your Stripe API keys so merchants can pay for a license directly from this admin. Keys are encrypted at rest.]]></comment>
+                <field id="stripe_secret_key" translate="label comment" type="obscure" sortOrder="10"
+                       showInDefault="1" showInWebsite="0" showInStore="0">
+                    <label>Stripe Secret Key</label>
+                    <comment><![CDATA[Your Stripe secret key (sk_test_... or sk_live_...).]]></comment>
+                    <backend_model>Magento\Config\Model\Config\Backend\Encrypted</backend_model>
+                </field>
+                <field id="stripe_publishable_key" translate="label comment" type="text" sortOrder="20"
+                       showInDefault="1" showInWebsite="0" showInStore="0">
+                    <label>Stripe Publishable Key</label>
+                    <comment><![CDATA[Your Stripe publishable key (pk_test_... or pk_live_...).]]></comment>
+                </field>
+                <field id="stripe_currency" translate="label comment" type="text" sortOrder="30"
+                       showInDefault="1" showInWebsite="0" showInStore="0">
+                    <label>Currency</label>
+                    <comment><![CDATA[3-letter ISO currency code, e.g. usd, gbp, eur. Default: usd]]></comment>
+                    <validate>validate-length maximum-length-3</validate>
                 </field>
             </group>
 
@@ -80,7 +102,7 @@
                     <comment><![CDATA[
                         Master on/off switch.<br/>
                         <strong>Yes</strong> = the module runs: the Edit Email button appears on admin
-                        order detail pages, the history menu appears under Sales → Operations.<br/>
+                        order detail pages, the history menu appears under eTechFlow.<br/>
                         <strong>No</strong> = the module does nothing. The admin order view is unchanged.
                     ]]></comment>
                 </field>

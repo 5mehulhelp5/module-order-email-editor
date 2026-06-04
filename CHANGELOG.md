@@ -4,6 +4,36 @@ All notable changes to this module. Adheres to [Semantic Versioning](https://sem
 
 ---
 
+## [1.1.0] — 2026-06-04 — Portal licensing, server-IP binding & billing-period plans
+
+Adds the eTechFlow Store Portal licensing layer to the module (the HMAC per-module
+and shared bundle keys keep working for offline / suite activation).
+
+### Added
+
+- **Hybrid `Model/LicenseValidator.php`** — SP-XXXX subscription keys validate live
+  against the eTechFlow portal with a **domain + server-IP** two-factor binding
+  (strict: no offline grace, no stale issued-key fallback). HMAC per-module and
+  shared bundle keys unchanged. Dev hosts + `Production Environment = No` bypass.
+- **In-admin Stripe checkout + license gate** — `Controller/Adminhtml/License/`
+  (`Gate`, `Checkout`, `Activated`) + dark plan-card gate page and success page.
+  Billing-period plans: **Weekly $5 / Monthly $15 / Yearly $150** (one full-feature
+  module, billed by period), matching the portal subscription model.
+- **License + Stripe admin config** — license key, issued-key, portal URL, bundle
+  key, and Stripe keys under *Stores → Config → eTechFlow → Order Email Editor*.
+- **`etc/db_schema_whitelist.json`** — fixes the missing whitelist so the
+  `etechflow_email_change_history` table is created on `setup:upgrade` (the 1.0.x
+  package shipped without it).
+
+### Changed
+
+- **License-gated entry points** — the Edit History grid redirects to the gate when
+  unlicensed; the Update endpoint already returns 403 via `Config::isEnabled()`.
+- **Customer-account sync** is now a licensed feature (`Config::isCustomerSyncAllowed()`,
+  plan flag `customer_sync`; included on all billing-period plans).
+
+---
+
 ## [1.0.2] — 2026-05-22 — Move admin menu under eTechFlow top-level sidebar
 
 ### Changed

@@ -48,7 +48,12 @@ class Update extends Action implements HttpPostActionInterface
 
         $orderId            = (int) $this->getRequest()->getParam('order_id');
         $newEmail           = (string) $this->getRequest()->getParam('new_email', '');
-        $alsoUpdateCustomer = (bool)   $this->getRequest()->getParam('update_customer', false);
+        // "Also update the linked customer account" is a Professional+ plan
+        // feature. On Starter (customer_sync = false) the request flag is
+        // honoured only if the plan allows it; otherwise the order email is
+        // still updated, just not the customer record.
+        $alsoUpdateCustomer = ((bool) $this->getRequest()->getParam('update_customer', false))
+            && $this->config->isCustomerSyncAllowed();
 
         if ($orderId <= 0) {
             return $result->setHttpResponseCode(400)

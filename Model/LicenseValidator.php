@@ -4,38 +4,53 @@ declare(strict_types=1);
 
 namespace ETechFlow\OrderEmailEditor\Model;
 
+use Magento\Framework\App\Cache\Type\Config as ConfigCacheType;
+use Magento\Framework\App\CacheInterface;
 use Magento\Framework\App\Config\ScopeConfigInterface;
+use Magento\Framework\App\Config\Storage\WriterInterface;
+use Magento\Framework\HTTP\Client\Curl;
 use Magento\Store\Model\ScopeInterface;
 use Magento\Store\Model\StoreManagerInterface;
 
 /**
- * Validates the per-domain license key for ETechFlow_OrderEmailEditor.
+ * License validation for ETechFlow_OrderEmailEditor.
  *
- * Same pattern as every other eTechFlow module:
- *   - Per-module key activates this module only.
- *   - Bundle key (shared HMAC secret across modules) activates ALL
- *     eTechFlow modules at once.
+ * Hybrid model — LICENSING_PROTOCOL.md + PORTAL_LICENSING_GUIDE.md:
+ *   - SP-XXXX keys  -> portal validation (domain + server IP must match),
+ *     the portal is the single source of truth (no offline grace).
+ *   - HMAC keys     -> local HMAC-SHA256 per-module key OR shared bundle key.
  *   - "Production Environment = No" bypasses licensing for dev/staging.
- *   - Common dev hostnames auto-detect and bypass licensing.
+ *   - Common dev hostnames auto-detect and bypass.
  *
- * Invalid licence -> the admin Edit Email button + history menu hide,
- * the update endpoint returns 403, and the original sales-order view
- * renders unchanged. Never crashes the admin.
+ * MODULE_ID + SECRET_FRAGMENTS are unique to this module; BUNDLE_ID +
+ * BUNDLE_SECRET_FRAGMENTS + XML_PATH_BUNDLE_LICENSE_KEY are byte-identical
+ * across EVERY eTechFlow module so a single bundle key activates all of them.
  */
 class LicenseValidator
 {
+    // ── per-module config paths ─────────────────────────────────────────────
     public const XML_PATH_LICENSE_KEY            = 'etechflow_orderemaileditor/license/license_key';
+    public const XML_PATH_ISSUED_KEY             = 'etechflow_orderemaileditor/license/issued_key';
+    public const XML_PATH_ISSUED_AT              = 'etechflow_orderemaileditor/license/issued_at';
+    public const XML_PATH_IP_BLOCKED             = 'etechflow_orderemaileditor/license/ip_blocked';
+    public const XML_PATH_PORTAL_URL             = 'etechflow_orderemaileditor/license/portal_url';
     public const XML_PATH_PRODUCTION_ENVIRONMENT = 'etechflow_orderemaileditor/license/production_environment';
 
-    /** Shared config path — same value across all eTechFlow modules. */
+    /** Shared bundle config path — same value across all eTechFlow modules. */
     public const XML_PATH_BUNDLE_LICENSE_KEY = 'etechflow_bundle/license/license_key';
 
+    // ── portal ──────────────────────────────────────────────────────────────
+    private const DEFAULT_PORTAL_URL   = 'https://portal.etechflow.com/license/validate';
+    public  const PORTAL_CACHE_TTL     = 30;   // valid result cache (s)
+    public  const PORTAL_CACHE_TTL_BAD = 60;   // invalid result cache (s)
+
+    // ── cache (unique per module) ────────────────────────────────────────────
+    private const CACHE_TAG    = 'ETECHFLOW_OEE';
+    private const CACHE_PREFIX = 'etf_oee_lic_';
+
+    // ── HMAC — per-module (UNIQUE to order-email-editor; do not reuse) ────────
     private const MODULE_ID = 'order-email-editor';
 
-    /** Shared bundle identifier — must match across all eTechFlow modules. */
-    private const BUNDLE_ID = 'etechflow-bundle';
-
-    /** Per-module HMAC secret. */
     private const SECRET_FRAGMENTS = [
         'eTF-OEE-2026',
         'q5W8-uM2v',
@@ -43,7 +58,9 @@ class LicenseValidator
         'J6tP-dA4y',
     ];
 
-    /** Shared bundle HMAC secret. MUST be identical across every eTechFlow module. */
+    // ── HMAC — shared bundle (MUST be identical in every eTechFlow module) ──
+    private const BUNDLE_ID = 'etechflow-bundle';
+
     private const BUNDLE_SECRET_FRAGMENTS = [
         'eTF-BUNDLE-2026',
         'k2D9-mP4x',
@@ -51,19 +68,17 @@ class LicenseValidator
         'X7tY-zW5q',
     ];
 
-    /**
-     * @param ScopeConfigInterface  $scopeConfig
-     * @param StoreManagerInterface $storeManager
-     */
     public function __construct(
         private readonly ScopeConfigInterface $scopeConfig,
-        private readonly StoreManagerInterface $storeManager
+        private readonly StoreManagerInterface $storeManager,
+        private readonly CacheInterface $cache,
+        private readonly Curl $curl,
+        private readonly WriterInterface $configWriter
     ) {
     }
 
-    /**
-     * @return bool
-     */
+    // ── public API ──────────────────────────────────────────────────────────
+
     public function isValid(): bool
     {
         $host = $this->getCurrentHost();
@@ -76,21 +91,9 @@ class LicenseValidator
         if ($this->isDevelopmentHost($host)) {
             return true;
         }
-        $configuredKey = $this->getConfiguredKey();
-        if ($configuredKey !== '' && hash_equals($this->computeKey($host), $configuredKey)) {
-            return true;
-        }
-        $bundleKey = $this->getConfiguredBundleKey();
-        if ($bundleKey !== '' && hash_equals($this->computeBundleKey($host), $bundleKey)) {
-            return true;
-        }
-        return false;
+        return $this->checkKey($host);
     }
 
-    /**
-     * @param string $host
-     * @return string
-     */
     public function computeKey(string $host): string
     {
         $payload = $this->canonicalize($host) . ':' . self::MODULE_ID;
@@ -99,10 +102,6 @@ class LicenseValidator
         return rtrim(strtr(base64_encode($raw), '+/', '-_'), '=');
     }
 
-    /**
-     * @param string $host
-     * @return string
-     */
     public function computeBundleKey(string $host): string
     {
         $payload = $this->canonicalize($host) . ':' . self::BUNDLE_ID;
@@ -111,11 +110,7 @@ class LicenseValidator
         return rtrim(strtr(base64_encode($raw), '+/', '-_'), '=');
     }
 
-    /**
-     * @param string $host
-     * @return string
-     */
-    private function canonicalize(string $host): string
+    public function canonicalize(string $host): string
     {
         $host = strtolower(trim($host));
         if (str_starts_with($host, 'www.')) {
@@ -124,27 +119,18 @@ class LicenseValidator
         return $host;
     }
 
-    /**
-     * @return string
-     */
     public function getConfiguredKey(): string
     {
         $value = $this->scopeConfig->getValue(self::XML_PATH_LICENSE_KEY, ScopeInterface::SCOPE_STORE);
         return trim((string) $value);
     }
 
-    /**
-     * @return string
-     */
     public function getConfiguredBundleKey(): string
     {
         $value = $this->scopeConfig->getValue(self::XML_PATH_BUNDLE_LICENSE_KEY, ScopeInterface::SCOPE_STORE);
         return trim((string) $value);
     }
 
-    /**
-     * @return bool
-     */
     public function isProductionEnvironment(): bool
     {
         $value = $this->scopeConfig->getValue(self::XML_PATH_PRODUCTION_ENVIRONMENT, ScopeInterface::SCOPE_STORE);
@@ -154,24 +140,23 @@ class LicenseValidator
         return (bool) $value;
     }
 
-    /**
-     * @return string
-     */
+    public function getPortalUrl(): string
+    {
+        $value = trim((string) $this->scopeConfig->getValue(self::XML_PATH_PORTAL_URL));
+        return $value !== '' ? $value : self::DEFAULT_PORTAL_URL;
+    }
+
     public function getCurrentHost(): string
     {
         try {
-            $url = $this->storeManager->getStore()->getBaseUrl();
+            $url  = $this->storeManager->getStore()->getBaseUrl();
             $host = parse_url($url, PHP_URL_HOST);
             return is_string($host) ? strtolower($host) : '';
-        } catch (\Exception $e) {
+        } catch (\Exception) {
             return '';
         }
     }
 
-    /**
-     * @param string|null $host
-     * @return bool
-     */
     public function isDevHost(?string $host = null): bool
     {
         $check = $host !== null
@@ -180,10 +165,123 @@ class LicenseValidator
         return $this->isDevelopmentHost($check);
     }
 
+    // ── private helpers ─────────────────────────────────────────────────────
+
+    private function checkKey(string $host): bool
+    {
+        $configuredKey = $this->getConfiguredKey();
+        if ($configuredKey === '') {
+            return false;
+        }
+
+        // SP-XXXX subscription key → ALWAYS validate live against the portal
+        // (result cached for PORTAL_CACHE_TTL only). No offline grace and no
+        // issued-key fallback: a server-IP mismatch, suspension, or expiry
+        // locks the module within the cache window.
+        if (str_starts_with($configuredKey, 'SP-')) {
+            return $this->portalResult($host, $configuredKey)['valid'];
+        }
+
+        // HMAC per-module key (offline; LICENSING_PROTOCOL.md)
+        if (hash_equals($this->computeKey($host), $configuredKey)) {
+            return true;
+        }
+        // Shared bundle key
+        $bundleKey = $this->getConfiguredBundleKey();
+        return $bundleKey !== '' && hash_equals($this->computeBundleKey($host), $bundleKey);
+    }
+
     /**
-     * @param string $host
-     * @return bool
+     * Live portal check. Returns ['valid' => bool, 'features' => array],
+     * cached together as JSON for PORTAL_CACHE_TTL.
+     *
+     * @return array{valid: bool, features: array<string,mixed>}
      */
+    private function portalResult(string $host, string $key): array
+    {
+        $cacheKey = self::CACHE_PREFIX . md5($host . ':' . $key);
+        $cached   = $this->cache->load($cacheKey);
+        if ($cached !== false) {
+            $d = json_decode((string) $cached, true);
+            if (is_array($d) && array_key_exists('valid', $d)) {
+                return [
+                    'valid'    => (bool) $d['valid'],
+                    'features' => isset($d['features']) && is_array($d['features']) ? $d['features'] : [],
+                ];
+            }
+        }
+
+        $url = $this->getPortalUrl()
+            . '?domain=' . urlencode($host)
+            . '&license_key=' . urlencode($key)
+            . '&platform=magento&module=' . self::MODULE_ID;
+
+        $valid    = false;
+        $features = [];
+        $status   = 0;
+        $body     = '';
+
+        try {
+            $this->curl->setTimeout(10);
+            $this->curl->addHeader('Accept', 'application/json');
+            $this->curl->addHeader('User-Agent', 'ETechFlow-OEE/1.1');
+            $this->curl->get($url);
+            $status = (int) $this->curl->getStatus();
+            $body   = (string) $this->curl->getBody();
+        } catch (\Throwable) {
+            // Portal unreachable — fail closed for THIS request without caching.
+            return ['valid' => false, 'features' => []];
+        }
+
+        if ($status === 200 && $body !== '') {
+            $data     = json_decode($body, true);
+            $valid    = !empty($data['valid']);
+            $features = (is_array($data) && isset($data['features']) && is_array($data['features'])) ? $data['features'] : [];
+        }
+
+        $ttl = $valid ? self::PORTAL_CACHE_TTL : self::PORTAL_CACHE_TTL_BAD;
+        $this->cache->save(
+            json_encode(['valid' => $valid, 'features' => $valid ? $features : []]),
+            $cacheKey,
+            [self::CACHE_TAG],
+            $ttl
+        );
+
+        return ['valid' => $valid, 'features' => $valid ? $features : []];
+    }
+
+    /**
+     * Plan feature flags for the active subscription. Returns [] for
+     * dev-bypass / HMAC / bundle keys (full features, no restriction).
+     *
+     * @return array<string,mixed>
+     */
+    public function getPlanFeatures(): array
+    {
+        $host = $this->getCurrentHost();
+        if ($host === '') {
+            return [];
+        }
+        $key = $this->getConfiguredKey();
+        if (!str_starts_with($key, 'SP-')) {
+            return [];
+        }
+        return $this->portalResult($host, $key)['features'];
+    }
+
+    /**
+     * Is a plan feature enabled? Defaults to $default when the flag isn't
+     * present, so feature-gating never disables a fully-licensed install.
+     */
+    public function isFeatureEnabled(string $flag, bool $default = true): bool
+    {
+        $features = $this->getPlanFeatures();
+        if (!array_key_exists($flag, $features)) {
+            return $default;
+        }
+        return (bool) $features[$flag];
+    }
+
     private function isDevelopmentHost(string $host): bool
     {
         if ($host === 'localhost' || str_starts_with($host, '127.')) {
@@ -196,17 +294,25 @@ class LicenseValidator
             return true;
         }
         foreach (['.test', '.local', '.localhost', '.dev', '.example', '.invalid'] as $s) {
-            if (str_ends_with($host, $s)) return true;
+            if (str_ends_with($host, $s)) {
+                return true;
+            }
         }
         foreach (['staging.', 'stage.', 'dev.', 'qa.', 'uat.', 'test.', 'preview.', 'sandbox.'] as $p) {
-            if (str_starts_with($host, $p)) return true;
+            if (str_starts_with($host, $p)) {
+                return true;
+            }
         }
-        if (preg_match('/-(staging|stage|dev|qa|uat|test|preview|sandbox)\./', $host)) return true;
+        // Hyphen-dev pattern intentionally omitted: production domains may contain '-dev'.
         foreach (['.magento.cloud', '.magentocloud.com', '.cloud.magento'] as $s) {
-            if (str_ends_with($host, $s)) return true;
+            if (str_ends_with($host, $s)) {
+                return true;
+            }
         }
-        foreach (['.ngrok.io', '.ngrok-free.app', '.loca.lt', '.serveo.net'] as $s) {
-            if (str_ends_with($host, $s)) return true;
+        foreach (['.ngrok.io', '.ngrok-free.app', '.loca.lt', '.serveo.net', '.ngrok-free.dev'] as $s) {
+            if (str_ends_with($host, $s)) {
+                return true;
+            }
         }
         return false;
     }

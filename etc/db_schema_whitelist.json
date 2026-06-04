@@ -1,0 +1,24 @@
+{
+    "etechflow_email_change_history": {
+        "column": {
+            "history_id": true,
+            "order_id": true,
+            "increment_id": true,
+            "old_email": true,
+            "new_email": true,
+            "changed_by_admin_id": true,
+            "changed_by_admin_name": true,
+            "customer_record_updated": true,
+            "ip_address": true,
+            "changed_at": true
+        },
+        "index": {
+            "ETECHFLOW_EMAIL_CHANGE_HISTORY_ORDER_ID": true,
+            "ETECHFLOW_EMAIL_CHANGE_HISTORY_CHANGED_AT": true
+        },
+        "constraint": {
+            "PRIMARY": true,
+            "ETECHFLOW_EMAIL_CHANGE_HISTORY_ORDER_ID_SALES_ORDER_ENTITY_ID": true
+        }
+    }
+}
