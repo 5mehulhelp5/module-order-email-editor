@@ -11,11 +11,6 @@
                 <ip_blocked>0</ip_blocked>
                 <portal_url>https://portal.etechflow.com/license/validate</portal_url>
             </license>
-            <payment>
-                <stripe_secret_key/>
-                <stripe_publishable_key/>
-                <stripe_currency>usd</stripe_currency>
-            </payment>
             <general>
                 <enabled>1</enabled>
             </general>
