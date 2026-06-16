@@ -25,7 +25,7 @@
                 <field id="license_key" translate="label comment tooltip" type="text" sortOrder="10"
                        showInDefault="1" showInWebsite="0" showInStore="0">
                     <label>License Key</label>
-                    <tooltip>Paste your eTechFlow SP-XXXX subscription key (auto-saved after Stripe payment) or a per-module/bundle key.</tooltip>
+                    <tooltip>Paste your eTechFlow SP-XXXX subscription key (auto-saved after checkout) or a per-module/bundle key.</tooltip>
                     <comment><![CDATA[Paste your eTechFlow SP-XXXX subscription key (generated automatically after checkout) OR a per-module HMAC key. Bundle key also accepted. Get one at <a href="https://etechflow.com" target="_blank">etechflow.com</a>.]]></comment>
                 </field>
                 <field id="issued_key" translate="label comment" type="obscure" sortOrder="20"
