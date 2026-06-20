@@ -3,6 +3,6 @@
         xsi:noNamespaceSchemaLocation="urn:magento:framework:Event/etc/events.xsd">
     <event name="controller_action_predispatch_order_email_editor_history_index">
         <observer name="etechflow_oee_add_update_notification"
-                  instance="ETechFlow\OrderEmailEditor\\Observer\\AddUpdateNotification"/>
+                  instance="ETechFlow\OrderEmailEditor\Observer\AddUpdateNotification"/>
     </event>
 </config>

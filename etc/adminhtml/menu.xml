@@ -2,31 +2,6 @@
 <config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Backend:etc/menu.xsd">
     <menu>
-        <!-- Shared eTechFlow top-level — declared identically by every
-             eTechFlow module so Magento merges to one sidebar entry.
-             See reference_etechflow_menu_convention. -->
-        <add id="eTechFlow::root"
-             title="eTechFlow"
-             module="ETechFlow_OrderEmailEditor"
-             sortOrder="68"
-             resource="Magento_Backend::admin"/>
-
-        <add id="eTechFlow::settings"
-             title="Settings"
-             module="ETechFlow_OrderEmailEditor"
-             sortOrder="500"
-             parent="eTechFlow::root"
-             resource="Magento_Backend::admin"/>
-
-        <add id="eTechFlow::configuration"
-             title="Configuration"
-             module="ETechFlow_OrderEmailEditor"
-             sortOrder="10"
-             parent="eTechFlow::settings"
-             action="adminhtml/system_config/edit/section/etechflow_orderemaileditor"
-             resource="Magento_Config::config"/>
-
-        <!-- Order Email Editor column. -->
         <add id="ETechFlow_OrderEmailEditor::root"
              title="Order Email Editor"
              module="ETechFlow_OrderEmailEditor"
